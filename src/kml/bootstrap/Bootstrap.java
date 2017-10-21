@@ -8,15 +8,13 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 
 
-public class Bootstrap {
-
-
+class Bootstrap {
     public Bootstrap(String[] args) {
         this.download();
         this.start(args);
     }
 
-    public void download() {
+    private void download() {
         File workingDir = getWorkingDirectory();
         File launcherETAG = new File(workingDir, "krothium.etag");
         File launcher = new File(workingDir, "krothium.jar");
@@ -51,7 +49,7 @@ public class Bootstrap {
     }
 
 
-    public void start(String[] args) {
+    private void start(String[] args) {
         String path = System.getProperty("java.home") + File.separator + "bin" + File.separator;
         File javaWin = new File(path + "javaw.exe");
         File javaOther = new File(path + "java.exe");
@@ -73,7 +71,7 @@ public class Bootstrap {
         }
     }
 
-    public static File getWorkingDirectory() {
+    private static File getWorkingDirectory() {
         String userHome = System.getProperty("user.home", ".");
         File workingDirectory;
         String osName = System.getProperty("os.name").toLowerCase();
