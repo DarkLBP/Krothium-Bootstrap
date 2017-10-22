@@ -20,6 +20,9 @@ class Bootstrap {
         File workingDir = getWorkingDirectory();
         File launcherETAG = new File(workingDir, "krothium.etag");
         File launcher = new File(workingDir, "krothium.jar");
+        if (!workingDir.isDirectory()) {
+            workingDir.mkdirs();
+        }
         try {
             URL url = new URL("http://mc.krothium.com/bootstrap/1/krothium.jar");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
