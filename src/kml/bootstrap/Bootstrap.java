@@ -19,7 +19,7 @@ class Bootstrap {
         File launcherETAG = new File(workingDir, "krothium.etag");
         File launcher = new File(workingDir, "krothium.jar");
         try {
-            URL url = new URL("http://mc.krothium.com/content/krothium.jar");
+            URL url = new URL("http://mc.krothium.com/bootstrap/1/krothium.jar");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             String etag = "";
             if (launcherETAG.exists()) {
@@ -65,7 +65,13 @@ class Bootstrap {
         arguments.add(launcher.getAbsolutePath());
         try {
             ProcessBuilder b = new ProcessBuilder(arguments);
-            b.start();
+            Process p = b.start();
+            InputStreamReader inReader = new InputStreamReader(p.getInputStream(), StandardCharsets.ISO_8859_1);
+            BufferedReader reader = new BufferedReader(inReader);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
