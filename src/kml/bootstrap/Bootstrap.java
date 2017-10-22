@@ -6,6 +6,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 class Bootstrap {
@@ -63,6 +64,7 @@ class Bootstrap {
         }
         arguments.add("-jar");
         arguments.add(launcher.getAbsolutePath());
+        arguments.addAll(Arrays.asList(args));
         try {
             ProcessBuilder b = new ProcessBuilder(arguments);
             Process p = b.start();
