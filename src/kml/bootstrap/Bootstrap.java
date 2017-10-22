@@ -52,7 +52,6 @@ class Bootstrap {
         }
     }
 
-
     private void start(String[] args) {
         String path = System.getProperty("java.home") + File.separator + "bin" + File.separator;
         File javaWin = new File(path + "javaw.exe");
