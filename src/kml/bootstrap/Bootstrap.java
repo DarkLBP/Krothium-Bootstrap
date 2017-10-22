@@ -1,5 +1,6 @@
 package kml.bootstrap;
 
+import javax.swing.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -43,7 +44,9 @@ class Bootstrap {
                 writer.close();
             }
         } catch (IOException e) {
-            if (!launcher.isFile() && !launcherETAG.isFile()) {
+            if (!launcher.isFile() || !launcherETAG.isFile()) {
+                JOptionPane.showMessageDialog(null, "Failed to download the launcher.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(-1);
             }
         }
