@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Locale;
 
 
 class Bootstrap {
@@ -82,15 +83,14 @@ class Bootstrap {
         logWriter.println("Starting launcher.");
         if (launcher.isFile()) {
             String path = System.getProperty("java.home") + File.separator + "bin" + File.separator;
-            File javaWin = new File(path + "javaw.exe");
-            File javaOther = new File(path + "java.exe");
-            File workingDir = getWorkingDirectory();
-            ArrayList<String> arguments = new ArrayList<>();
-            if (javaWin.isFile()) {
-                arguments.add(javaWin.getAbsolutePath());
+            String osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+            if (osName.contains("win") && new File(path + "javaw.exe").isFile()) {
+                path += "javaw.exe";
             } else {
-                arguments.add(javaOther.getAbsolutePath());
+                path += "java";
             }
+            ArrayList<String> arguments = new ArrayList<>();
+            arguments.add(path);
             arguments.add("-jar");
             arguments.add(launcher.getAbsolutePath());
             arguments.addAll(Arrays.asList(args));
