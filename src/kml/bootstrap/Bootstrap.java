@@ -25,7 +25,7 @@ class Bootstrap {
         }
         File bootstrapLog = new File(logsFolder, "krothium-bootstrap.log");
         try (Logging logWriter = new Logging(bootstrapLog)){
-            logWriter.println("Krothium Bootstrap 1.1.0");
+            logWriter.println("Krothium Bootstrap 1.2.0");
             logWriter.println("Starting.");
             this.download(launcher, launcherETAG, logWriter);
             this.start(launcher, args, logWriter);
