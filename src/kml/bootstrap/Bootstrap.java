@@ -17,11 +17,8 @@ class Bootstrap {
         File launcherETAG = new File(workingDir, "krothium.etag");
         File launcher = new File(workingDir, "krothium.jar");
         File logsFolder = new File(workingDir, "logs");
-        if (!workingDir.isDirectory()) {
-            workingDir.mkdirs();
-        }
         if (!logsFolder.isDirectory()) {
-            logsFolder.mkdir();
+            logsFolder.mkdirs();
         }
         File bootstrapLog = new File(logsFolder, "krothium-bootstrap.log");
         try (Logging logWriter = new Logging(bootstrapLog)){
