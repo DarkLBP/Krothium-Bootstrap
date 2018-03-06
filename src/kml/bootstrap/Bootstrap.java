@@ -25,7 +25,7 @@ class Bootstrap {
             logWriter.println("Krothium Bootstrap 1.2.0");
             logWriter.println("Starting.");
             this.download(launcher, launcherETAG, logWriter);
-            this.start(launcher, args, logWriter);
+            this.start(launcher, launcherETAG, args, logWriter);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -38,7 +38,7 @@ class Bootstrap {
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             String etag = "";
             logWriter.println("Checking matching ETAG.");
-            if (launcherETAG.exists()) {
+            if (launcherETAG.exists() && launcher.exists()) {
                 logWriter.println("ETAG found.");
                 etag = new String(Files.readAllBytes(launcherETAG.toPath()), StandardCharsets.UTF_8);
                 con.setRequestProperty("If-None-Match", etag);
@@ -76,7 +76,7 @@ class Bootstrap {
         }
     }
 
-    private void start(File launcher, String[] args, Logging logWriter) {
+    private void start(File launcher, File etag, String[] args, Logging logWriter) {
         logWriter.println("Starting launcher.");
         if (launcher.isFile()) {
             String path = System.getProperty("java.home") + File.separator + "bin" + File.separator;
@@ -100,9 +100,19 @@ class Bootstrap {
                 while ((line = reader.readLine()) != null) {
                     System.out.println(line);
                 }
+                if (p.exitValue() != 0) {
+                    logWriter.println("Launcher was not closed properly. Removing files.");
+                    launcher.delete();
+                    etag.delete();
+                    JOptionPane.showMessageDialog(null,
+                            "Failed to start the launcher. Check the logs for more information.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                }
             } catch (Exception e) {
                 logWriter.println("Something wrong happened.");
                 e.printStackTrace(logWriter);
+                launcher.delete();
+                etag.delete();
                 JOptionPane.showMessageDialog(null,
                         "Failed to start the launcher. Check the logs for more information.",
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -110,6 +120,9 @@ class Bootstrap {
         } else {
             logWriter.println("No krothium.jar found at " + launcher.getAbsolutePath() + ".");
             logWriter.println("We could not start the launcher.");
+            JOptionPane.showMessageDialog(null,
+                    "Failed to start the launcher. Check the logs for more information.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
