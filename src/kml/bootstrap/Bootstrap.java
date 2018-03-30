@@ -117,7 +117,6 @@ class Bootstrap {
                     while ((entry = in.getNextEntry()) != null) {
                         gui.updateLabel("Downloading " + entry.getName() + "...");
                         logger.println("Downloading " + entry.getName() + "...");
-                        gui.setProgress(tracked.getTotalRead());
                         File outputFile = new File(workingDir, entry.getName());
                         if (entry.isDirectory()) {
                             outputFile.mkdirs();
@@ -128,6 +127,7 @@ class Bootstrap {
                             int read;
                             while ((read = in.read(buffer)) != -1) {
                                 out.write(buffer, 0, read);
+                                gui.setProgress(tracked.getTotalRead());
                             }
                             out.close();
                         }
