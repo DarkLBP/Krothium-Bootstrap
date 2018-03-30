@@ -7,48 +7,46 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 
 class Bootstrap {
-    private final Logging logger;
+    public static final String BOOTSTRAP_VERSION = "1.3.0";
+    private Logging logger;
 
-    Bootstrap(String[] args) throws FileNotFoundException {
+    Bootstrap(String[] args) {
         File workingDir = getWorkingDirectory();
-        File launcherETAG = new File(workingDir, "krothium.etag");
-        File launcher = new File(workingDir, "krothium.jar");
         File logsFolder = new File(workingDir, "logs");
         if (!logsFolder.isDirectory()) {
             logsFolder.mkdirs();
         }
         File bootstrapLog = new File(logsFolder, "krothium-bootstrap.log");
-        logger = new Logging(bootstrapLog);
-        logger.println("Krothium Bootstrap 1.3.0");
-        logger.println("Checking Java version.");
-        checkJavaVersion();
-        download(launcher, launcherETAG);
-        start(launcher, launcherETAG, args);
+        try {
+            logger = new Logging(bootstrapLog);
+            logger.println("Krothium Bootstrap " + BOOTSTRAP_VERSION);
+            boolean customJava = downloadRuntime(workingDir);
+            download(workingDir);
+            start(workingDir, args, customJava);
+        } catch (Exception ex) {
+            if (logger != null) {
+                ex.printStackTrace(logger);
+            }
+        }
         exit();
     }
 
-    private void checkJavaVersion() {
-        double javaVersion = Double.parseDouble(System.getProperty("java.specification.version"));
-        logger.println("Found java version " + javaVersion);
-        if (javaVersion < 1.8) {
-            logger.println("Java version not supported.");
-            JOptionPane.showMessageDialog(null, "Java 9 or higher required to run the launcher.\n" +
-                    "Go to https://www.java.com to download a most updated version.");
-            exit();
-        }
-    }
-
-    private void download(File launcher, File launcherETAG) {
+    private void download(File workingDir) {
+        File launcherETAG = new File(workingDir, "krothium.etag");
+        File launcher = new File(workingDir, "krothium.jar");
+        logger.println("Downloading launcher...");
         try {
             logger.println("Connecting to server.");
-            URL url = new URL("http://mc.krothium.com/bootstrap/1/krothium.jar");
+            URL url = new URL("http://mc.krothium.com/bootstrap/launcher.jar");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             String etag ;
             logger.println("Checking matching ETAG.");
-            if (launcherETAG.exists() && launcher.exists()) {
+            if (launcherETAG.exists()) {
                 logger.println("ETAG found.");
                 etag = readFile(launcherETAG);
                 con.setRequestProperty("If-None-Match", etag);
@@ -60,7 +58,7 @@ class Bootstrap {
                 FileOutputStream out = new FileOutputStream(launcher);
                 logger.println("Downloading from " + url.toString() + ".");
                 pipeStreams(in, out);
-                logger.println("Download completed.");
+                logger.println("Launcher downloaded.");
                 logger.println("Saving ETAG for later.");
                 PrintWriter writer = new PrintWriter(launcherETAG);
                 writer.write(etag);
@@ -80,11 +78,94 @@ class Bootstrap {
         }
     }
 
-    private void start(File launcher, File etag, String[] args) {
+    private boolean downloadRuntime(File workingDir)  {
+        ProgressGUI gui = new ProgressGUI();
+        logger.println("Downloading java runtime...");
+        try {
+            String os = System.getProperty("os.name").toLowerCase();
+            String arch = System.getProperty("os.arch").endsWith("64") ? "64" : "32";
+            String fileName = "";
+            if (os.contains("win")) {
+                fileName = "jre-windows-" + arch;
+            } else if (os.contains("mac") && !arch.equals("32")) {
+                fileName = "jre-macos-" + arch;
+            } else if (os.contains("linux") || os.contains("unix")) {
+                fileName = "jre-linux-" + arch;
+            }
+            if (fileName.isEmpty()) {
+                logger.println("OS " + os + " with arch " + arch + " does not have runtime.");
+            } else {
+                logger.println("Connecting to server.");
+                URL url = new URL("http://mc.krothium.com/bootstrap/" + fileName + ".zip");
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                String etag ;
+                logger.println("Checking matching ETAG.");
+                File jreETAG = new File(workingDir, "jre" + File.separator + "jre.etag");
+                if (jreETAG.exists()) {
+                    logger.println("ETAG found.");
+                    etag = readFile(jreETAG);
+                    con.setRequestProperty("If-None-Match", etag);
+                }
+                if (con.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                    gui.setVisible(true);
+                    etag = con.getHeaderField("ETag");
+                    int totalSize = con.getContentLength();
+                    gui.setMaximum(totalSize);
+                    TrackedInputStream tracked = new TrackedInputStream(con.getInputStream());
+                    ZipInputStream in = new ZipInputStream(tracked);
+                    ZipEntry entry;
+                    while ((entry = in.getNextEntry()) != null) {
+                        gui.updateLabel("Downloading " + entry.getName() + "...");
+                        logger.println("Downloading " + entry.getName() + "...");
+                        gui.setProgress(tracked.getTotalRead());
+                        File outputFile = new File(workingDir, entry.getName());
+                        if (entry.isDirectory()) {
+                            outputFile.mkdirs();
+                        } else {
+                            outputFile.getParentFile().mkdir();
+                            FileOutputStream out = new FileOutputStream(outputFile);
+                            byte[] buffer = new byte[8192];
+                            int read;
+                            while ((read = in.read(buffer)) != -1) {
+                                out.write(buffer, 0, read);
+                            }
+                            out.close();
+                        }
+                        in.closeEntry();
+                    }
+                    in.close();
+                    logger.println("Java runtime downloaded.");
+                    logger.println("Saving ETAG for later.");
+                    PrintWriter writer = new PrintWriter(jreETAG);
+                    writer.write(etag);
+                    writer.close();
+                    gui.dispose();
+                    logger.println("Done.");
+                } else {
+                    logger.println("ETAG matched, not need to redownload.");
+                }
+                return true;
+            }
+        } catch (IOException ex) {
+            logger.println("Failed to download runtime.");
+            ex.printStackTrace(logger);
+            gui.dispose();
+        }
+        return false;
+    }
+
+    private void start(File workingDir, String[] args, boolean customJava) {
+        File launcher = new File(workingDir, "krothium.jar");
+        File etag = new File(workingDir, "krothium.etag");
         logger.println("Starting launcher.");
         if (launcher.isFile()) {
-            String path = System.getProperty("java.home") + File.separator + "bin" + File.separator;
-            String osName = System.getProperty("os.name");
+            String path;
+            if (customJava) {
+                path = workingDir + File.separator + "jre" + File.separator + "bin" + File.separator;
+            } else {
+                path = System.getProperty("java.home") + File.separator + "bin" + File.separator;
+            }
+            String osName = System.getProperty("os.name").toLowerCase();
             if (osName.contains("win") && new File(path + "javaw.exe").isFile()) {
                 path += "javaw.exe";
             } else {
@@ -106,7 +187,6 @@ class Bootstrap {
                 }
                 if (p.exitValue() != 0) {
                     logger.println("Launcher was not closed properly. Removing files.");
-                    launcher.delete();
                     etag.delete();
                     JOptionPane.showMessageDialog(null,
                             "Failed to start the launcher. Check the logs for more information.",
@@ -115,7 +195,6 @@ class Bootstrap {
             } catch (Exception e) {
                 logger.println("Something wrong happened.");
                 e.printStackTrace(logger);
-                launcher.delete();
                 etag.delete();
                 JOptionPane.showMessageDialog(null,
                         "Failed to start the launcher. Check the logs for more information.",
