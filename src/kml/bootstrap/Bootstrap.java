@@ -171,6 +171,13 @@ class Bootstrap {
             } else {
                 path += "java";
             }
+            File javaExec = new File(path);
+            logger.println("Making " + path + " executable.");
+            if (javaExec.setExecutable(true)) {
+                logger.println("Done.");
+            } else {
+                logger.println("Failed to set file as executable.");
+            }
             ArrayList<String> arguments = new ArrayList<String>();
             arguments.add(path);
             arguments.add("-jar");
@@ -185,6 +192,7 @@ class Bootstrap {
                 while ((line = reader.readLine()) != null) {
                     System.out.println(line);
                 }
+                p.waitFor();
                 if (p.exitValue() != 0) {
                     logger.println("Launcher was not closed properly. Removing files.");
                     etag.delete();
