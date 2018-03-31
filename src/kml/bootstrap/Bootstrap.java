@@ -202,6 +202,8 @@ class Bootstrap {
             }
             ArrayList<String> arguments = new ArrayList<String>();
             arguments.add(path);
+            arguments.add("-Xmx100M");
+            arguments.add("-Xms50M");
             arguments.add("-jar");
             arguments.add(launcher.getAbsolutePath());
             arguments.addAll(Arrays.asList(args));
