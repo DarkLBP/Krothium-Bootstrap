@@ -107,6 +107,12 @@ class Bootstrap {
                     con.setRequestProperty("If-None-Match", etag);
                 }
                 if (con.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                    File parent = jreETAG.getParentFile();
+                    if (parent.isDirectory()) {
+                        logger.println("Cleaning existing jre folder...");
+                        deleteDirectory(parent);
+                        logger.println("Done.");
+                    }
                     gui.setVisible(true);
                     etag = con.getHeaderField("ETag");
                     int totalSize = con.getContentLength();
@@ -152,6 +158,22 @@ class Bootstrap {
             gui.dispose();
         }
         return false;
+    }
+
+    private void deleteDirectory(File directory) {
+        if (directory.isDirectory()) {
+            File[] files = directory.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.isDirectory()) {
+                        deleteDirectory(f);
+                    } else {
+                        f.delete();
+                    }
+                }
+            }
+        }
+        directory.delete();
     }
 
     private void start(File workingDir, String[] args, boolean customJava) {
