@@ -1,8 +1,8 @@
 package kml.bootstrap;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.*;
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -42,8 +42,8 @@ class Bootstrap {
         logger.println("Downloading launcher...");
         try {
             logger.println("Connecting to server.");
-            URL url = new URL("http://mc.krothium.com/bootstrap/launcher.jar");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            URL url = new URL("https://mc.krothium.com/bootstrap/launcher.jar");
+            HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
             String etag ;
             logger.println("Checking matching ETAG.");
             if (launcherETAG.exists()) {
@@ -51,7 +51,7 @@ class Bootstrap {
                 etag = readFile(launcherETAG);
                 con.setRequestProperty("If-None-Match", etag);
             }
-            if (con.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+            if (con.getResponseCode() != HttpsURLConnection.HTTP_NOT_MODIFIED) {
                 logger.println("Download required.");
                 etag = con.getHeaderField("ETag");
                 InputStream in = con.getInputStream();
@@ -96,8 +96,8 @@ class Bootstrap {
                 logger.println("OS " + os + " with arch " + arch + " does not have runtime.");
             } else {
                 logger.println("Connecting to server.");
-                URL url = new URL("http://mc.krothium.com/bootstrap/" + fileName + ".zip");
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                URL url = new URL("https://mc.krothium.com/bootstrap/" + fileName + ".zip");
+                HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
                 String etag ;
                 logger.println("Checking matching ETAG.");
                 File jreETAG = new File(workingDir, "jre" + File.separator + "jre.etag");
@@ -106,7 +106,7 @@ class Bootstrap {
                     etag = readFile(jreETAG);
                     con.setRequestProperty("If-None-Match", etag);
                 }
-                if (con.getResponseCode() != HttpURLConnection.HTTP_NOT_MODIFIED) {
+                if (con.getResponseCode() != HttpsURLConnection.HTTP_NOT_MODIFIED) {
                     File parent = jreETAG.getParentFile();
                     if (parent.isDirectory()) {
                         logger.println("Cleaning existing jre folder...");
