@@ -12,7 +12,7 @@ import java.util.zip.ZipInputStream;
 
 
 class Bootstrap {
-    public static final String BOOTSTRAP_VERSION = "2.0.0";
+    public static final String BOOTSTRAP_VERSION = "2.1.0";
     private Logging logger;
 
     Bootstrap(String[] args) {
